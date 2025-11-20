@@ -1603,7 +1603,6 @@ elements.downloadBtn.addEventListener('click', async () => {
 
         showLoading(true);
 
-
         const annotatedData = [];
         tool.conversations.forEach(conv => {
             const convId = conv[0].Id;
@@ -1622,29 +1621,30 @@ elements.downloadBtn.addEventListener('click', async () => {
                         'Customer Feedback': isLastMessage ? message['Customer Feedback'] || '' : ''
                     };
 
-
-                 if (isFirstMessage) {
-    // Add all bucket annotations at the end
-    tool.buckets.forEach(bucket => {
-        row[bucket] = savedAnnotations[bucket] || '';
-    });
-} else {
-    // For non-first messages, add empty values for annotations
-    tool.buckets.forEach(bucket => {
-        row[bucket] = '';
-    });
-                     row['Overall Observations'] = '';
-}
-// Add Login, Date, and Timestamp fields
-// Add Login and Timestamp fields
-row['Login'] = tool.userName;
-row['Timestamp'] = savedAnnotations["Timestamp"] || '';
-
-annotatedData.push(row);
+                    if (isFirstMessage) {
+                        // Add all bucket annotations except Overall Observations
+                        tool.buckets.forEach(bucket => {
+                            row[bucket] = savedAnnotations[bucket] || '';
+                        });
+                        // Add Overall Observations after Other Queries
+                        row['Overall Observations'] = savedAnnotations['Overall Observations'] || '';
+                        // Add Login and Timestamp at the end
+                        row['Login'] = tool.userName;
+                        row['Timestamp'] = savedAnnotations["Timestamp"] || '';
+                    } else {
+                        // For non-first messages, add empty values for annotations
+                        tool.buckets.forEach(bucket => {
+                            row[bucket] = '';
+                        });
+                        // Keep the same column order
+                        row['Overall Observations'] = '';
+                        row['Login'] = tool.userName;
+                        row['Timestamp'] = savedAnnotations["Timestamp"] || '';
+                    }
+                    annotatedData.push(row);
                 });  // Close the conv.forEach
             }        // Close the if statement
         });         // Close the tool.conversations.forEach
-
 
 
         const ws = XLSX.utils.json_to_sheet(annotatedData);
