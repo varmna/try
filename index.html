@@ -1181,9 +1181,13 @@ elements.progressBar.innerHTML = '';
 console.log('Tool reset complete');
 }
 
-elements.uploadBox.addEventListener('click', () => elements.fileInput.click());
+elements.uploadBox.addEventListener('click', () => {
+    console.log('Upload box clicked');  // Add this line
+    elements.fileInput.click();
+});
 
 elements.fileInput.addEventListener('change', async (event) => {
+    console.log('File selected:', event.target.files[0]); // Add this line
     const file = event.target.files[0];
     if (!file) {
         showStatus('⚠️ No file selected', 'warning');
@@ -1609,7 +1613,6 @@ row['Login'] = tool.userName;
 row['Timestamp'] = savedAnnotations["Timestamp"] || '';
 
 annotatedData.push(row);
-                    / Only one instance of this line needed
                 });  // Close the conv.forEach
             }        // Close the if statement
         });         // Close the tool.conversations.forEach
