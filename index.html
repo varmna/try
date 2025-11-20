@@ -627,37 +627,107 @@ animation: spin 1s linear infinite;
 0% { transform: rotate(0deg); }
 100% { transform: rotate(360deg); }
 }
+    /* Add these new styles at the end of your existing CSS */
+.login-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.login-modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+}
+
+.login-modal-content h2 {
+    margin-bottom: 20px;
+}
+
+.login-modal-content input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.login-modal-content button {
+    width: 100%;
+    padding: 10px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.login-modal-content button:hover {
+    background: #0056b3;
+}
+
+.user-display {
+    padding: 8px 12px;
+    background: #e3f2fd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--primary-color);
+}
 </style>
 </head>
 <body>
 
+<div id="login-modal" class="login-modal" style="display: none;">
+    <div class="login-modal-content">
+        <h2>Enter Your Name</h2>
+        <input type="text" id="login-name" placeholder="Your Name" required>
+        <button id="login-submit">Submit</button>
+    </div>
+</div>
+
 <div id="upload-screen" class="upload-screen">
-<div class="upload-container">
-<h1>Conversation Annotator</h1>
-<div class="upload-box" id="upload-box">
-<input type="file" id="excel-upload" accept=".xlsx" style="display: none;">
-<div class="upload-content">
-<svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-<path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
-</svg>
-<p>Drag & drop your Excel file here or click to browse</p>
-<small>Only .xlsx files are supported</small>
+    <div class="upload-container">
+        <h1>Conversation Annotator</h1>
+        <div class="upload-box" id="upload-box">
+            <input type="file" id="excel-upload" accept=".xlsx" style="display: none;">
+            <div class="upload-content">
+                <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+                </svg>
+                <p>Drag & drop your Excel file here or click to browse</p>
+                <small>Only .xlsx files are supported</small>
+            </div>
+        </div>
+    </div>
 </div>
-</div>
-</div>
-</div>
+
 
 <div id="main-interface" class="main-interface" style="display: none;">
 <div class="top-bar">
-<h1>Conversation Annotator</h1>
-<div class="top-bar-actions">
-<div class="progress-info">
-<span class="progress-text" id="progress-text">0/0 Conversations</span>
-<span class="annotated-count" id="annotated-count">0 Annotated</span>
-</div>
-<button id="exit-btn" class="btn btn-outline">🚪 Exit Tool</button>
-<button id="download-btn" class="btn btn-primary">📥 Download</button>
-</div>
+    <h1>Conversation Annotator</h1>
+    <div class="top-bar-actions">
+        <div class="user-display">
+            👤 <span id="user-name-display">Not logged in</span>
+        </div>
+        <div class="progress-info">
+            <span class="progress-text" id="progress-text">0/0 Conversations</span>
+            <span class="annotated-count" id="annotated-count">0 Annotated</span>
+        </div>
+        <button id="exit-btn" class="btn btn-outline">🚪 Exit Tool</button>
+        <button id="download-btn" class="btn btn-primary">📥 Download</button>
+    </div>
 </div>
 
 <div class="content-wrapper">
@@ -709,12 +779,13 @@ animation: spin 1s linear infinite;
 document.addEventListener('DOMContentLoaded', function() {
 
 const tool = {
-currentIndex: 0,
-conversations: [],
-annotations: {},
-hasUnsavedChanges: false,
-fileName: '',
-buckets: [
+    currentIndex: 0,
+    conversations: [],
+    annotations: {},
+    hasUnsavedChanges: false,
+    fileName: '',
+    userName: '', 
+    buckets: [
 "Bot Response",
 "HVA",
 "AB feature/HVA Related Query",
@@ -782,6 +853,48 @@ staticComments: {
     "Overall Observations": []
 }
 };
+    function showLoginModal() {
+    document.getElementById('login-modal').style.display = 'flex';
+}
+
+function handleLogin() {
+    const nameInput = document.getElementById('login-name');
+    const name = nameInput.value.trim();
+    
+    if (name) {
+        tool.userName = name;
+        document.getElementById('login-modal').style.display = 'none';
+        document.getElementById('user-name-display').textContent = name;
+        localStorage.setItem('annotator_username', name);
+        return true;
+    } else {
+        showStatus('⚠️ Please enter your name', 'warning');
+        return false;
+    }
+}
+
+// Add these event listeners at the end of your DOMContentLoaded section
+document.getElementById('login-submit').addEventListener('click', () => {
+    if (handleLogin()) {
+        elements.fileInput.click();
+    }
+});
+
+document.getElementById('login-name').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        if (handleLogin()) {
+            elements.fileInput.click();
+        }
+    }
+});
+
+// Add this to check for saved username
+const savedUsername = localStorage.getItem('annotator_username');
+if (savedUsername) {
+    tool.userName = savedUsername;
+    document.getElementById('user-name-display').textContent = savedUsername;
+}
+
 
 const elements = {
 uploadScreen: document.getElementById('upload-screen'),
@@ -1039,11 +1152,15 @@ console.log('Tool reset complete');
 elements.uploadBox.addEventListener('click', () => elements.fileInput.click());
 
 elements.fileInput.addEventListener('change', async (event) => {
-const file = event.target.files[0];
-if (!file) {
-showStatus('⚠️ No file selected', 'warning');
-return;
-}
+    if (!tool.userName) {
+        showLoginModal();
+        return;
+    }
+    const file = event.target.files[0];
+    if (!file) {
+        showStatus('⚠️ No file selected', 'warning');
+        return;
+    }
 if (!file.name.endsWith('.xlsx')) {
 showStatus('❌ Please select an Excel (.xlsx) file', 'error');
 return;
@@ -1430,11 +1547,13 @@ const isFirstMessage = index === 0;
 const isLastMessage = index === conv.length - 1;
 
 const row = {
-'Id': message.Id,
-'llmGeneratedUserMessage': message.llmGeneratedUserMessage || '',
-'botMessage': message.botMessage || '',
-'Customer Feedback': isLastMessage ? message['Customer Feedback'] || '' : ''
+    'Id': message.Id,
+    'Annotator': tool.userName,  
+    'llmGeneratedUserMessage': message.llmGeneratedUserMessage || '',
+    'botMessage': message.botMessage || '',
+    'Customer Feedback': isLastMessage ? message['Customer Feedback'] || '' : ''
 };
+
 
 if (isFirstMessage) {
 tool.buckets.forEach(bucket => {
