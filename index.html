@@ -904,20 +904,21 @@ function handleLogin() {
 }
 
 
-// Add these event listeners at the end of your DOMContentLoaded section
+// AFTER (fixed code)
 document.getElementById('login-submit').addEventListener('click', () => {
-    if (handleLogin()) {
-        elements.fileInput.click();
+    if (handleLogin() && !tool.conversations.length) {
+        elements.fileInput.click(); // Only open file browser if no file is loaded
     }
 });
 
 document.getElementById('login-name').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-        if (handleLogin()) {
-            elements.fileInput.click();
+        if (handleLogin() && !tool.conversations.length) {
+            elements.fileInput.click(); // Only open file browser if no file is loaded
         }
     }
 });
+
 
 // Add this to check for saved username
 const savedUsername = localStorage.getItem('annotator_username');
