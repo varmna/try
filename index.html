@@ -1593,20 +1593,22 @@ elements.downloadBtn.addEventListener('click', async () => {
                         tool.buckets.forEach(bucket => {
                             row[bucket] = savedAnnotations[bucket] || '';
                         });
-                        // Add annotator name at the very end
-                        row['Annotator'] = tool.userName;
                     } else {
                         // For non-first messages, add empty values for annotations
                         tool.buckets.forEach(bucket => {
                             row[bucket] = '';
                         });
-                        row['Annotator'] = '';
                     }
+                    // Add annotator name to every row
+                    row['Annotator'] = tool.userName;
 
                     annotatedData.push(row);
                 });
             }
         });
+
+        // ... rest of the download code ...
+
 
         const ws = XLSX.utils.json_to_sheet(annotatedData);
         const wb = XLSX.utils.book_new();
