@@ -1572,7 +1572,6 @@ elements.downloadBtn.addEventListener('click', async () => {
 
         showLoading(true);
 
-        const currentDate = new Date().toISOString().split('T')[0]; // Gets YYYY-MM-DD format
 
         const annotatedData = [];
         tool.conversations.forEach(conv => {
@@ -1605,12 +1604,12 @@ elements.downloadBtn.addEventListener('click', async () => {
     });
 }
 // Add Login, Date, and Timestamp fields
+// Add Login and Timestamp fields
 row['Login'] = tool.userName;
-row['Date'] = currentDate;
-row['Timestamp'] = savedAnnotations["Timestamp"] || '';  // Use saved timestamp
-  // This will add date and time
+row['Timestamp'] = savedAnnotations["Timestamp"] || '';
 
-annotatedData.push(row);  // Only one instance of this line needed
+annotatedData.push(row);
+                    / Only one instance of this line needed
                 });  // Close the conv.forEach
             }        // Close the if statement
         });         // Close the tool.conversations.forEach
