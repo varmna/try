@@ -818,7 +818,6 @@ const tool = {
 "Personal Prime Related Query",
 "Customer Behavior",
 "Other Queries",
-"Overall Observations"
 ],
 hvaOptions: [
 "N/A",
@@ -1009,13 +1008,14 @@ html += `
 </div>
 `;
 });
+    html += `
+        <div class="form-section">
+            <div class="form-section-title">Overall Observations</div>
+            <textarea class="form-control" name="overall-observations" placeholder="Please provide overall observations for this conversation" rows="3" oninput="markUnsaved()"></textarea>
+        </div>
+    `;
 
-html += `
-</div>
-</div>
-`;
-
-elements.feedbackForm.innerHTML = html;
+    elements.feedbackForm.innerHTML = html;
 }
 
 window.toggleBucketDetails = function(bucket) {
@@ -1472,6 +1472,12 @@ function saveCurrentAnnotations() {
         showStatus(`⚠️ Please select a predefined comment for ${bucketWithMissingComment}`, 'warning');
         return;
     }
+    const overallObservations = document.querySelector('textarea[name="overall-observations"]').value.trim();
+if (!overallObservations) {
+    showStatus('⚠️ Please provide overall observations', 'warning');
+    return;
+}
+tempAnnotations["Overall Observations"] = overallObservations;
 
     tempAnnotations["Timestamp"] = new Date().toLocaleString();
 
