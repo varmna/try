@@ -1528,78 +1528,83 @@ return buf;
 }
 
 elements.downloadBtn.addEventListener('click', async () => {
-try {
-if (Object.keys(tool.annotations).length === 0) {
-showStatus('⚠️ No annotations to download', 'warning');
-return;
-}
+    try {
+        if (Object.keys(tool.annotations).length === 0) {
+            showStatus('⚠️ No annotations to download', 'warning');
+            return;
+        }
 
-showLoading(true);
+        showLoading(true);
 
-const annotatedData = [];
-tool.conversations.forEach(conv => {
-const convId = conv[0].Id;
-const savedAnnotations = tool.annotations[convId];
+        const annotatedData = [];
+        tool.conversations.forEach(conv => {
+            const convId = conv[0].Id;
+            const savedAnnotations = tool.annotations[convId];
 
-if (savedAnnotations && Object.keys(savedAnnotations).length > 0) {
-conv.forEach((message, index) => {
-const isFirstMessage = index === 0;
-const isLastMessage = index === conv.length - 1;
+            if (savedAnnotations && Object.keys(savedAnnotations).length > 0) {
+                conv.forEach((message, index) => {
+                    const isFirstMessage = index === 0;
+                    const isLastMessage = index === conv.length - 1;
 
-const row = {
-    'Id': message.Id,
-    'Annotator': tool.userName,  
-    'llmGeneratedUserMessage': message.llmGeneratedUserMessage || '',
-    'botMessage': message.botMessage || '',
-    'Customer Feedback': isLastMessage ? message['Customer Feedback'] || '' : ''
-};
+                    // Base row structure with original data
+                    const row = {
+                        'Id': message.Id,
+                        'llmGeneratedUserMessage': message.llmGeneratedUserMessage || '',
+                        'botMessage': message.botMessage || '',
+                        'Customer Feedback': isLastMessage ? message['Customer Feedback'] || '' : ''
+                    };
 
+                    if (isFirstMessage) {
+                        // Add all bucket annotations at the end
+                        tool.buckets.forEach(bucket => {
+                            row[bucket] = savedAnnotations[bucket] || '';
+                        });
+                        // Add annotator name at the very end
+                        row['Annotator'] = tool.userName;
+                    } else {
+                        // For non-first messages, add empty values for annotations
+                        tool.buckets.forEach(bucket => {
+                            row[bucket] = '';
+                        });
+                        row['Annotator'] = '';
+                    }
 
-if (isFirstMessage) {
-tool.buckets.forEach(bucket => {
-row[bucket] = savedAnnotations[bucket] || '';
+                    annotatedData.push(row);
+                });
+            }
+        });
+
+        const ws = XLSX.utils.json_to_sheet(annotatedData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Annotations");
+
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+        const blob = new Blob([s2ab(wbout)], { type: 'application/octet-stream' });
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        a.download = `annotated_conversations_${timestamp}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showStatus('✅ Downloaded successfully!', 'success');
+
+        if (confirm('Do you want to clear the saved session data? (Your downloaded file is safe)')) {
+            clearLocalStorage();
+            showStatus('🗑️ Session data cleared', 'info');
+        }
+    } catch (error) {
+        showStatus('❌ Error downloading file', 'error');
+    } finally {
+        showLoading(false);
+    }
 });
-} else {
-tool.buckets.forEach(bucket => {
-row[bucket] = '';
-});
-}
 
-annotatedData.push(row);
-});
-}
-});
-
-const ws = XLSX.utils.json_to_sheet(annotatedData);
-const wb = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb, ws, "Annotations");
-
-const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
-const blob = new Blob([s2ab(wbout)], { type: 'application/octet-stream' });
-const url = window.URL.createObjectURL(blob);
-
-const a = document.createElement('a');
-a.href = url;
-const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-a.download = `annotated_conversations_${timestamp}.xlsx`;
-document.body.appendChild(a);
-a.click();
-
-window.URL.revokeObjectURL(url);
-document.body.removeChild(a);
-
-showStatus('✅ Downloaded successfully!', 'success');
-
-if (confirm('Do you want to clear the saved session data? (Your downloaded file is safe)')) {
-clearLocalStorage();
-showStatus('🗑️ Session data cleared', 'info');
-}
-} catch (error) {
-showStatus('❌ Error downloading file', 'error');
-} finally {
-showLoading(false);
-}
-});
 
 elements.exitBtn.addEventListener('click', exitTool);
 
