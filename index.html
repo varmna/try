@@ -1592,7 +1592,7 @@ elements.downloadBtn.addEventListener('click', async () => {
                     };
 
 
-                   if (isFirstMessage) {
+                 if (isFirstMessage) {
     // Add all bucket annotations at the end
     tool.buckets.forEach(bucket => {
         row[bucket] = savedAnnotations[bucket] || '';
@@ -1603,18 +1603,16 @@ elements.downloadBtn.addEventListener('click', async () => {
         row[bucket] = '';
     });
 }
-// Add Login and Date fields
+// Add Login, Date, and Timestamp fields
 row['Login'] = tool.userName;
-row['Date'] = currentDate;  // Add this line to include the date
+row['Date'] = currentDate;
+row['Timestamp'] = new Date().toLocaleString();  // This will add date and time
 
-annotatedData.push(row);  // Add this line to include the row in the final data
+annotatedData.push(row);  // Only one instance of this line needed
+                });  // Close the conv.forEach
+            }        // Close the if statement
+        });         // Close the tool.conversations.forEach
 
-                });
-            }
-        });
-
-
-        // ... rest of the download code ...
 
 
         const ws = XLSX.utils.json_to_sheet(annotatedData);
