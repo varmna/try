@@ -1686,10 +1686,25 @@ jumpToConversation();
 });
 
 // FIXED: Keyboard shortcuts with proper Ctrl+S handling
-// FIXED: Keyboard shortcuts with proper Ctrl+S handling
 document.addEventListener('keydown', (e) => {
-    // ... existing keyboard shortcuts code ...
-}, true);
+    if (elements.mainInterface.style.display === 'none') return;
+
+    // Handle Ctrl+S for saving annotations
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();  // Prevent browser's save dialog
+        e.stopPropagation(); // Correct
+        elements.saveBtn.click(); // Trigger save
+        return false;
+    }
+
+    // Handle arrow key navigation
+    if (e.key === 'ArrowLeft' && !e.target.matches('input, textarea, select')) {
+        elements.prevBtn.click();
+    } else if (e.key === 'ArrowRight' && !e.target.matches('input, textarea, select')) {
+        elements.nextBtn.click();
+    }
+}, true); // Use capture phase to catch event earlier
+
 
 createFeedbackForm();
 checkActiveSession();
