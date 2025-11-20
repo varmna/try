@@ -1571,6 +1571,8 @@ elements.downloadBtn.addEventListener('click', async () => {
 
         showLoading(true);
 
+        const currentDate = new Date().toISOString().split('T')[0]; // Gets YYYY-MM-DD format
+
         const annotatedData = [];
         tool.conversations.forEach(conv => {
             const convId = conv[0].Id;
@@ -1589,21 +1591,24 @@ elements.downloadBtn.addEventListener('click', async () => {
                         'Customer Feedback': isLastMessage ? message['Customer Feedback'] || '' : ''
                     };
 
-                    if (isFirstMessage) {
-                        // Add all bucket annotations at the end
-                        tool.buckets.forEach(bucket => {
-                            row[bucket] = savedAnnotations[bucket] || '';
-                        });
-                    } else {
-                        // For non-first messages, add empty values for annotations
-                        tool.buckets.forEach(bucket => {
-                            row[bucket] = '';
-                        });
-                    }
-                    // Changed from 'Annotator' to 'Login'
-                    row['Login'] = tool.userName;
 
-                    annotatedData.push(row);
+                   if (isFirstMessage) {
+    // Add all bucket annotations at the end
+    tool.buckets.forEach(bucket => {
+        row[bucket] = savedAnnotations[bucket] || '';
+    });
+} else {
+    // For non-first messages, add empty values for annotations
+    tool.buckets.forEach(bucket => {
+        row[bucket] = '';
+    });
+}
+// Add Login and Date fields
+row['Login'] = tool.userName;
+row['Date'] = currentDate;  // Add this line to include the date
+
+annotatedData.push(row);  // Add this line to include the row in the final data
+
                 });
             }
         });
