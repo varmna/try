@@ -856,6 +856,7 @@ staticComments: {
         "Yes",
         "No"
     ],
+    "Promo & Freebie Related Queries": [],
     "Personal Prime Related Query": ["Amazon Prime Details"],
     "BP for Non-Profit Organisation Related Query": ["Non profit organisation query"],
     "Help-page/Direct Customer Service": [
@@ -1411,70 +1412,90 @@ elements.annotatedCount.textContent = `${count} Annotated`;
 }
 
 function saveCurrentAnnotations() {
-if (!tool.conversations || tool.conversations.length === 0 || !tool.conversations[tool.currentIndex]) {
-showStatus('❌ No conversation loaded', 'error');
-return;
+    if (!tool.conversations || tool.conversations.length === 0 || !tool.conversations[tool.currentIndex]) {
+        showStatus('❌ No conversation loaded', 'error');
+        return;
+    }
+
+    const convId = tool.conversations[tool.currentIndex][0].Id;
+    const tempAnnotations = {};
+
+    const botResponse = document.querySelector('input[name="bot-response"]:checked');
+    if (botResponse) {
+        tempAnnotations["Bot Response"] = botResponse.value;
+    }
+
+    const hvaSelect = document.getElementById('hva-select');
+    if (hvaSelect.value) {
+        tempAnnotations["HVA"] = hvaSelect.value;
+    }
+
+    // Add validation for predefined comments
+    let missingPredefinedComment = false;
+    let bucketWithMissingComment = '';
+
+    tool.buckets.slice(2).forEach(bucket => {
+        const checkbox = document.querySelector(`input[value="${bucket}"]`);
+        if (checkbox && checkbox.checked) {
+            if (tool.staticComments[bucket] && tool.staticComments[bucket].length > 0) {
+                const staticDropdown = document.querySelector(`select[name="${bucket}-static"]`);
+                const staticValue = staticDropdown ? staticDropdown.value : '';
+                
+                // Check if predefined comment is selected
+                if (!staticValue) {
+                    missingPredefinedComment = true;
+                    bucketWithMissingComment = bucket;
+                    return;
+                }
+
+                const subTextarea = document.querySelector(`textarea[name="${bucket}-sub"]`);
+                const subValue = subTextarea ? subTextarea.value.trim() : '';
+
+                if (staticValue) {
+                    let finalValue = staticValue;
+                    if (subValue) {
+                        finalValue += ' - ' + subValue;
+                    }
+                    tempAnnotations[bucket] = finalValue;
+                }
+            } else {
+                const textarea = document.querySelector(`textarea[name="${bucket}"]`);
+                if (textarea && textarea.value.trim()) {
+                    tempAnnotations[bucket] = textarea.value.trim();
+                }
+            }
+        }
+    });
+
+    // Show error if predefined comment is missing
+    if (missingPredefinedComment) {
+        showStatus(`⚠️ Please select a predefined comment for ${bucketWithMissingComment}`, 'warning');
+        return;
+    }
+
+    tempAnnotations["Timestamp"] = new Date().toLocaleString();
+
+    if (Object.keys(tempAnnotations).length === 0) {
+        showStatus('⚠️ Please select at least one bucket or provide annotations', 'warning');
+        return;
+    }
+
+    tool.annotations[convId] = tempAnnotations;
+    saveToLocalStorage();
+    clearUnsaved();
+    updateAnnotatedCount();
+    updateProgressBar();
+
+    const isAnnotated = Object.keys(tempAnnotations).length > 0;
+    elements.annotationStatus.innerHTML = `
+        <div class="status-indicator ${isAnnotated ? 'status-annotated' : 'status-not-annotated'}">
+            ${isAnnotated ? '✓ Annotated' : '⚠ Not Annotated'}
+        </div>
+    `;
+
+    showStatus('✅ Annotations saved!', 'success');
 }
 
-const convId = tool.conversations[tool.currentIndex][0].Id;
-const tempAnnotations = {};
-
-const botResponse = document.querySelector('input[name="bot-response"]:checked');
-if (botResponse) {
-tempAnnotations["Bot Response"] = botResponse.value;
-}
-
-const hvaSelect = document.getElementById('hva-select');
-if (hvaSelect.value) {
-tempAnnotations["HVA"] = hvaSelect.value;
-}
-    tempAnnotations["Timestamp"] = new Date().toLocaleString();  // Add this line
-
-tool.buckets.slice(2).forEach(bucket => {
-const checkbox = document.querySelector(`input[value="${bucket}"]`);
-if (checkbox && checkbox.checked) {
-if (tool.staticComments[bucket] && tool.staticComments[bucket].length > 0) {
-const staticDropdown = document.querySelector(`select[name="${bucket}-static"]`);
-const subTextarea = document.querySelector(`textarea[name="${bucket}-sub"]`);
-const staticValue = staticDropdown ? staticDropdown.value : '';
-const subValue = subTextarea ? subTextarea.value.trim() : '';
-
-if (staticValue) {
-let finalValue = staticValue;
-if (subValue) {
-finalValue += ' - ' + subValue;
-}
-tempAnnotations[bucket] = finalValue;
-}
-} else {
-const textarea = document.querySelector(`textarea[name="${bucket}"]`);
-if (textarea && textarea.value.trim()) {
-tempAnnotations[bucket] = textarea.value.trim();
-}
-}
-}
-});
-
-if (Object.keys(tempAnnotations).length === 0) {
-showStatus('⚠️ Please select at least one bucket or provide annotations', 'warning');
-return;
-}
-
-tool.annotations[convId] = tempAnnotations;
-saveToLocalStorage();
-clearUnsaved();
-updateAnnotatedCount();
-updateProgressBar();
-
-const isAnnotated = Object.keys(tempAnnotations).length > 0;
-elements.annotationStatus.innerHTML = `
-<div class="status-indicator ${isAnnotated ? 'status-annotated' : 'status-not-annotated'}">
-${isAnnotated ? '✓ Annotated' : '⚠ Not Annotated'}
-</div>
-`;
-
-showStatus('✅ Annotations saved!', 'success');
-}
 
 function loadAnnotations() {
 if (!tool.conversations || tool.conversations.length === 0 || !tool.conversations[tool.currentIndex]) {
