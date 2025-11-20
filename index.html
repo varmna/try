@@ -1600,13 +1600,14 @@ elements.downloadBtn.addEventListener('click', async () => {
                             row[bucket] = '';
                         });
                     }
-                    // Add annotator name to every row
-                    row['Annotator'] = tool.userName;
+                    // Changed from 'Annotator' to 'Login'
+                    row['Login'] = tool.userName;
 
                     annotatedData.push(row);
                 });
             }
         });
+
 
         // ... rest of the download code ...
 
