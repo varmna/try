@@ -627,6 +627,25 @@ animation: spin 1s linear infinite;
 0% { transform: rotate(0deg); }
 100% { transform: rotate(360deg); }
 }
+    .user-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#edit-username-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+#edit-username-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
     /* Add these new styles at the end of your existing CSS */
 .login-modal {
     position: fixed;
@@ -717,11 +736,12 @@ animation: spin 1s linear infinite;
 <div id="main-interface" class="main-interface" style="display: none;">
 <div class="top-bar">
     <h1>Conversation Annotator</h1>
-    <div class="top-bar-actions">
-        <div class="user-display">
-            👤 <span id="user-name-display">Not logged in</span>
-        </div>
-        <div class="progress-info">
+<div class="top-bar-actions">
+    <div class="user-display">
+        👤 <span id="user-name-display">Not logged in</span>
+        <button id="edit-username-btn" class="btn btn-sm btn-outline">✏️ Edit</button>
+    </div>
+    <div class="progress-info">
             <span class="progress-text" id="progress-text">0/0 Conversations</span>
             <span class="annotated-count" id="annotated-count">0 Annotated</span>
         </div>
@@ -855,6 +875,9 @@ staticComments: {
 };
     function showLoginModal() {
     document.getElementById('login-modal').style.display = 'flex';
+    const nameInput = document.getElementById('login-name');
+    nameInput.value = tool.userName || ''; // Pre-fill existing username if editing
+    nameInput.focus();
 }
 
 function handleLogin() {
@@ -866,12 +889,20 @@ function handleLogin() {
         document.getElementById('login-modal').style.display = 'none';
         document.getElementById('user-name-display').textContent = name;
         localStorage.setItem('annotator_username', name);
+        
+        // Show main interface if file is loaded
+        if (tool.conversations.length > 0) {
+            elements.uploadScreen.style.display = 'none';
+            elements.mainInterface.style.display = 'flex';
+            showStatus('✅ Name updated successfully!', 'success');
+        }
         return true;
     } else {
         showStatus('⚠️ Please enter your name', 'warning');
         return false;
     }
 }
+
 
 // Add these event listeners at the end of your DOMContentLoaded section
 document.getElementById('login-submit').addEventListener('click', () => {
@@ -1152,36 +1183,39 @@ console.log('Tool reset complete');
 elements.uploadBox.addEventListener('click', () => elements.fileInput.click());
 
 elements.fileInput.addEventListener('change', async (event) => {
-    if (!tool.userName) {
-        showLoginModal();
-        return;
-    }
     const file = event.target.files[0];
     if (!file) {
         showStatus('⚠️ No file selected', 'warning');
         return;
     }
-if (!file.name.endsWith('.xlsx')) {
-showStatus('❌ Please select an Excel (.xlsx) file', 'error');
-return;
-}
-try {
-showLoading(true);
-tool.fileName = file.name.replace('.xlsx', '');
-const data = await readExcelFile(file);
-if (!data || data.length === 0) {
-throw new Error('No data found in file');
-}
-processExcelData(data);
-elements.uploadScreen.style.display = 'none';
-elements.mainInterface.style.display = 'flex';
-showStatus('✅ File loaded successfully!', 'success');
-} catch (error) {
-showStatus('❌ Error: ' + (error.message || 'Failed to load file'), 'error');
-} finally {
-showLoading(false);
-}
+    if (!file.name.endsWith('.xlsx')) {
+        showStatus('❌ Please select an Excel (.xlsx) file', 'error');
+        return;
+    }
+    try {
+        showLoading(true);
+        tool.fileName = file.name.replace('.xlsx', '');
+        const data = await readExcelFile(file);
+        if (!data || data.length === 0) {
+            throw new Error('No data found in file');
+        }
+        processExcelData(data);
+        
+        // Show login modal if username not set
+        if (!tool.userName) {
+            showLoginModal();
+        } else {
+            elements.uploadScreen.style.display = 'none';
+            elements.mainInterface.style.display = 'flex';
+            showStatus('✅ File loaded successfully!', 'success');
+        }
+    } catch (error) {
+        showStatus('❌ Error: ' + (error.message || 'Failed to load file'), 'error');
+    } finally {
+        showLoading(false);
+    }
 });
+
 
 elements.uploadBox.addEventListener('dragover', (e) => {
 e.preventDefault();
@@ -1649,36 +1683,28 @@ jumpToConversation();
 });
 
 // FIXED: Keyboard shortcuts with proper Ctrl+S handling
+// FIXED: Keyboard shortcuts with proper Ctrl+S handling
 document.addEventListener('keydown', (e) => {
-if (elements.mainInterface.style.display === 'none') return;
-
-// Handle Ctrl/Cmd+S for saving annotations
-if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
-e.preventDefault();
-e.stopPropagation();
-elements.saveBtn.click();
-return false;
-}
-
-// Handle arrow key navigation
-if (e.key === 'ArrowLeft' && !e.target.matches('input, textarea, select')) {
-elements.prevBtn.click();
-} else if (e.key === 'ArrowRight' && !e.target.matches('input, textarea, select')) {
-elements.nextBtn.click();
-}
-}, true); // Use capture phase to catch event earlier
+    // ... existing keyboard shortcuts code ...
+}, true);
 
 createFeedbackForm();
 checkActiveSession();
 
-window.addEventListener('beforeunload', (e) => {
-if (tool.hasUnsavedChanges) {
-e.preventDefault();
-e.returnValue = '';
-}
+// Add event listener for edit username button
+document.getElementById('edit-username-btn').addEventListener('click', () => {
+    showLoginModal();
 });
 
+window.addEventListener('beforeunload', (e) => {
+    if (tool.hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
 });
+
+}); // <-- This is the end of DOMContentLoaded event listener
+
 </script>
 </body>
 </html>
