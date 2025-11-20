@@ -1424,6 +1424,7 @@ const hvaSelect = document.getElementById('hva-select');
 if (hvaSelect.value) {
 tempAnnotations["HVA"] = hvaSelect.value;
 }
+    tempAnnotations["Timestamp"] = new Date().toLocaleString();  // Add this line
 
 tool.buckets.slice(2).forEach(bucket => {
 const checkbox = document.querySelector(`input[value="${bucket}"]`);
@@ -1606,7 +1607,8 @@ elements.downloadBtn.addEventListener('click', async () => {
 // Add Login, Date, and Timestamp fields
 row['Login'] = tool.userName;
 row['Date'] = currentDate;
-row['Timestamp'] = new Date().toLocaleString();  // This will add date and time
+row['Timestamp'] = savedAnnotations["Timestamp"] || '';  // Use saved timestamp
+  // This will add date and time
 
 annotatedData.push(row);  // Only one instance of this line needed
                 });  // Close the conv.forEach
